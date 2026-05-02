@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+tmp/
+*.mp4
+*.mp3
+*.jpg
+!assets/**/*.jpg
+credentials.json
+token.json
