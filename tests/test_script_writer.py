@@ -14,12 +14,11 @@ SAMPLE_SCRIPT = {
 
 
 def test_generate_script_returns_valid_structure(mocker):
-    mock_model = mocker.MagicMock()
     mock_response = mocker.MagicMock()
     mock_response.text = json.dumps(SAMPLE_SCRIPT)
-    mock_model.generate_content.return_value = mock_response
-    mocker.patch("google.generativeai.configure")
-    mocker.patch("google.generativeai.GenerativeModel", return_value=mock_model)
+    mock_client = mocker.MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    mocker.patch("modules.script_writer.genai.Client", return_value=mock_client)
 
     result = generate_script("Test Topic", "fake-api-key")
 
@@ -31,26 +30,25 @@ def test_generate_script_returns_valid_structure(mocker):
 
 
 def test_generate_script_strips_markdown_code_block(mocker):
-    mock_model = mocker.MagicMock()
     mock_response = mocker.MagicMock()
     mock_response.text = f"```json\n{json.dumps(SAMPLE_SCRIPT)}\n```"
-    mock_model.generate_content.return_value = mock_response
-    mocker.patch("google.generativeai.configure")
-    mocker.patch("google.generativeai.GenerativeModel", return_value=mock_model)
+    mock_client = mocker.MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    mocker.patch("modules.script_writer.genai.Client", return_value=mock_client)
 
     result = generate_script("Test Topic", "fake-api-key")
     assert result["title"] == "The Test Mystery"
 
 
 def test_generate_script_uses_gemini_flash(mocker):
-    mock_model = mocker.MagicMock()
     mock_response = mocker.MagicMock()
     mock_response.text = json.dumps(SAMPLE_SCRIPT)
-    mock_model.generate_content.return_value = mock_response
-    mocker.patch("google.generativeai.configure")
-    mock_constructor = mocker.patch(
-        "google.generativeai.GenerativeModel", return_value=mock_model
-    )
+    mock_client = mocker.MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
+    mocker.patch("modules.script_writer.genai.Client", return_value=mock_client)
 
     generate_script("Test Topic", "fake-api-key")
-    mock_constructor.assert_called_once_with("gemini-1.5-flash")
+
+    mock_client.models.generate_content.assert_called_once()
+    call_kwargs = mock_client.models.generate_content.call_args
+    assert call_kwargs[1]["model"] == "gemini-2.0-flash"

@@ -1,5 +1,5 @@
 import json
-import google.generativeai as genai
+from google import genai
 
 PROMPT_TEMPLATE = """You are a scriptwriter for a faceless YouTube channel about history and mysteries.
 Write a compelling video script about: {topic}
@@ -42,9 +42,11 @@ def _strip_markdown(text: str) -> str:
 
 
 def generate_script(topic: str, api_key: str) -> dict:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    client = genai.Client(api_key=api_key)
     prompt = PROMPT_TEMPLATE.format(topic=topic)
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt,
+    )
     cleaned = _strip_markdown(response.text)
     return json.loads(cleaned)
