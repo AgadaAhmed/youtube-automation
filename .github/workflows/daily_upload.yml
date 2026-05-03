@@ -24,12 +24,6 @@ jobs:
       - name: Install FFmpeg
         run: sudo apt-get install -y ffmpeg
 
-      - name: Download Montserrat Bold font
-        run: |
-          mkdir -p assets/fonts
-          wget -q "https://github.com/google/fonts/raw/main/ofl/montserrat/static/Montserrat-Bold.ttf" \
-            -O assets/fonts/Montserrat-Bold.ttf
-
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
