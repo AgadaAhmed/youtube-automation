@@ -153,13 +153,14 @@ def _image_to_video_segment(slide_path: str, audio_path: str, output_path: str) 
 
 
 def _render_outro_segment(slide_path: str, output_path: str, duration: float = OUTRO_DURATION) -> None:
+    # -t BEFORE -i limits input duration — most reliable way to cap a looped image segment
     subprocess.run(
         ["ffmpeg", "-y",
-         "-loop", "1", "-i", slide_path,
-         "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+         "-t", str(duration), "-loop", "1", "-i", slide_path,
+         "-f", "lavfi", "-t", str(duration), "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
          "-c:v", "libx264", "-crf", "18", "-preset", "fast",
          "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
-         "-pix_fmt", "yuv420p", "-t", str(duration),
+         "-pix_fmt", "yuv420p", "-shortest",
          output_path],
         check=True, capture_output=True,
     )

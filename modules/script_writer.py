@@ -2,10 +2,9 @@ import json
 from groq import Groq
 
 PROMPT_TEMPLATE = """You are a scriptwriter for a viral faceless YouTube channel about history and mysteries.
-Write a compelling video script about: {topic}
+Write a single, cohesive, narrative-driven video script about: {topic}
 
-The video should be 5-8 minutes long (roughly 800-1100 words total across all sections).
-Tone: alternate between dark/suspenseful and epic/cinematic. Start with a gripping hook.
+This must read like ONE continuous story — not a list of facts. Every section must flow naturally into the next, like a documentary narrator walking the viewer through events in real time.
 
 Return ONLY valid JSON — no markdown, no explanation — in exactly this format:
 {{
@@ -14,24 +13,28 @@ Return ONLY valid JSON — no markdown, no explanation — in exactly this forma
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8"],
   "sections": [
     {{
-      "text": "Narration text for this slide. 2-4 sentences. 25-40 words. Dramatic and conversational.",
+      "text": "Exactly 25-35 words of narration. One moment in the story. Must connect to the next section.",
       "duration": 20
     }}
   ]
 }}
 
-Title rules — make it irresistible to click:
-- Use power words: "Vanished", "Terrifying", "Nobody Knows", "Disturbing", "Covered Up", "They Never Found", "Still Unsolved"
-- Use curiosity gaps: "The Truth About...", "What Really Happened to...", "They Tried to Hide This"
-- Numbers work well: "3 Minutes That Changed History", "The Last 48 Hours of..."
-- Under 60 characters. No clickbait lies — must reflect the actual content.
+STRICT RULES:
+- 15-18 sections total
+- Each section: EXACTLY 25-35 words — no more, no less
+- Every section must feel like the next beat in a continuous story
+- Use narrative transitions: "But that wasn't the strangest part.", "What happened next shocked investigators.", "Nobody could explain what they found.", "And then — silence."
+- Build tension gradually: Hook → Setup → Rising dread → Revelation → Unanswered questions → Haunting close
+- Section 1: gripping hook that drops the viewer into the moment
+- Final section: chilling or reflective thought that lingers
+- NO bullet-point style writing. NO "In this video we will explore..." — pure cinematic narration only
 
-Other requirements:
-- 15-20 sections total
-- Each section: 2-4 dramatic sentences, 25-40 words
-- First section must open with a gripping hook sentence
-- Last section must end with a reflective or chilling closing thought
-- Include 8 relevant tags
+Title rules — make it irresistible:
+- Power words: "Vanished", "Nobody Knows", "Covered Up", "They Never Found", "Still Unsolved", "Terrifying"
+- Curiosity gaps: "What Really Happened to...", "The Truth About...", "They Tried to Hide This"
+- Under 60 characters. Must reflect actual content — no lies.
+
+- 8 relevant tags
 - description must NOT repeat the title verbatim"""
 
 
