@@ -44,7 +44,7 @@ def _fetch_image(query: str, api_key: str, width: int, height: int) -> Image.Ima
         photos = r.json().get("photos", [])
         if photos:
             photo = random.choice(photos[:5])
-            img_bytes = req.get(photo["src"]["large2x"], timeout=20).content
+            img_bytes = req.get(photo["src"]["original"], timeout=30).content
             img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
             return ImageOps.fit(img, (width, height), Image.LANCZOS)
     except Exception:
@@ -145,22 +145,21 @@ def render_outro_slide(channel_name: str, output_path: str, pexels_key: str = ""
 def _image_to_video_segment(slide_path: str, audio_path: str, output_path: str) -> None:
     subprocess.run(
         ["ffmpeg", "-y", "-loop", "1", "-i", slide_path, "-i", audio_path,
-         "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
+         "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+         "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
          "-pix_fmt", "yuv420p", "-shortest", output_path],
         check=True, capture_output=True,
     )
 
 
 def _render_outro_segment(slide_path: str, output_path: str, duration: float = OUTRO_DURATION) -> None:
-    """Render outro with exact duration using lavfi silence — no separate MP3 needed."""
     subprocess.run(
         ["ffmpeg", "-y",
          "-loop", "1", "-i", slide_path,
          "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
-         "-c:v", "libx264", "-tune", "stillimage",
-         "-c:a", "aac", "-b:a", "192k",
-         "-pix_fmt", "yuv420p",
-         "-t", str(duration),
+         "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+         "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
+         "-pix_fmt", "yuv420p", "-t", str(duration),
          output_path],
         check=True, capture_output=True,
     )
