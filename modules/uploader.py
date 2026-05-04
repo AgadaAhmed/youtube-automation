@@ -20,10 +20,13 @@ def upload_video(video_path: str, thumbnail_path: str, script: dict, credentials
 
     youtube = build("youtube", "v3", credentials=creds)
 
+    hashtags = " ".join(f"#{t.replace(' ', '')}" for t in script["tags"])
+    description = f"{script['description']}\n\n{hashtags}"
+
     body = {
         "snippet": {
             "title": script["title"],
-            "description": script["description"],
+            "description": description,
             "tags": script["tags"],
             "categoryId": "27",
         },

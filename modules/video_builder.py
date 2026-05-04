@@ -142,19 +142,26 @@ def render_outro_slide(channel_name: str, output_path: str, pexels_key: str = ""
     img.save(output_path)
 
 
-def _create_silence_mp3(output_path: str, duration: float = OUTRO_DURATION) -> None:
-    subprocess.run(
-        ["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
-         "-t", str(duration), "-codec:a", "libmp3lame", "-q:a", "9", output_path],
-        check=True, capture_output=True,
-    )
-
-
 def _image_to_video_segment(slide_path: str, audio_path: str, output_path: str) -> None:
     subprocess.run(
         ["ffmpeg", "-y", "-loop", "1", "-i", slide_path, "-i", audio_path,
          "-c:v", "libx264", "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
          "-pix_fmt", "yuv420p", "-shortest", output_path],
+        check=True, capture_output=True,
+    )
+
+
+def _render_outro_segment(slide_path: str, output_path: str, duration: float = OUTRO_DURATION) -> None:
+    """Render outro with exact duration using lavfi silence — no separate MP3 needed."""
+    subprocess.run(
+        ["ffmpeg", "-y",
+         "-loop", "1", "-i", slide_path,
+         "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+         "-c:v", "libx264", "-tune", "stillimage",
+         "-c:a", "aac", "-b:a", "192k",
+         "-pix_fmt", "yuv420p",
+         "-t", str(duration),
+         output_path],
         check=True, capture_output=True,
     )
 
@@ -195,10 +202,8 @@ def build_video(script: dict, audio_files: list, tmp_dir: str, output_path: str,
 
     outro_slide = os.path.join(tmp_dir, "slide_outro.png")
     render_outro_slide(CHANNEL_NAME, outro_slide, pexels_key=pexels_key)
-    outro_audio = os.path.join(tmp_dir, "outro_silence.mp3")
-    _create_silence_mp3(outro_audio)
     seg_outro = os.path.join(tmp_dir, "seg_outro.mp4")
-    _image_to_video_segment(outro_slide, outro_audio, seg_outro)
+    _render_outro_segment(outro_slide, seg_outro, duration=OUTRO_DURATION)
     segments.append(seg_outro)
 
     _concat_segments(segments, output_path)

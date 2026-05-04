@@ -1,7 +1,7 @@
 import json
 from groq import Groq
 
-PROMPT_TEMPLATE = """You are a scriptwriter for a faceless YouTube channel about history and mysteries.
+PROMPT_TEMPLATE = """You are a scriptwriter for a viral faceless YouTube channel about history and mysteries.
 Write a compelling video script about: {topic}
 
 The video should be 5-8 minutes long (roughly 800-1100 words total across all sections).
@@ -9,9 +9,9 @@ Tone: alternate between dark/suspenseful and epic/cinematic. Start with a grippi
 
 Return ONLY valid JSON — no markdown, no explanation — in exactly this format:
 {{
-  "title": "Compelling YouTube title under 60 characters",
+  "title": "Captivating YouTube title under 60 characters",
   "description": "YouTube description 150-200 words covering what the video is about",
-  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8"],
   "sections": [
     {{
       "text": "Narration text for this slide. 2-4 sentences. 25-40 words. Dramatic and conversational.",
@@ -20,13 +20,18 @@ Return ONLY valid JSON — no markdown, no explanation — in exactly this forma
   ]
 }}
 
-Requirements:
+Title rules — make it irresistible to click:
+- Use power words: "Vanished", "Terrifying", "Nobody Knows", "Disturbing", "Covered Up", "They Never Found", "Still Unsolved"
+- Use curiosity gaps: "The Truth About...", "What Really Happened to...", "They Tried to Hide This"
+- Numbers work well: "3 Minutes That Changed History", "The Last 48 Hours of..."
+- Under 60 characters. No clickbait lies — must reflect the actual content.
+
+Other requirements:
 - 15-20 sections total
 - Each section: 2-4 dramatic sentences, 25-40 words
 - First section must open with a gripping hook sentence
 - Last section must end with a reflective or chilling closing thought
-- Title must be click-worthy and under 60 characters
-- Include 5-8 relevant tags
+- Include 8 relevant tags
 - description must NOT repeat the title verbatim"""
 
 
