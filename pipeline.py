@@ -1,7 +1,7 @@
 """
 Main pipeline orchestrator.
 Run: python pipeline.py
-Env vars required: GROQ_API_KEY, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN
+Env vars required: GROQ_API_KEY, PEXELS_API_KEY, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN
 """
 import os
 import shutil
@@ -47,13 +47,14 @@ def run() -> None:
         print(f"      Generated {len(audio_files)} audio clips")
 
         print("[4/6] Building video...")
+        pexels_key = os.environ.get("PEXELS_API_KEY", "")
         video_path = os.path.join(tmp_dir, "output.mp4")
-        build_video(script, audio_files, tmp_dir, video_path)
+        build_video(script, audio_files, tmp_dir, video_path, pexels_key=pexels_key)
         print(f"      Video: {video_path}")
 
         print("[5/6] Generating thumbnail...")
         thumbnail_path = os.path.join(tmp_dir, "thumbnail.jpg")
-        generate_thumbnail(script["title"], thumbnail_path)
+        generate_thumbnail(script["title"], thumbnail_path, topic=topic, pexels_key=pexels_key)
 
         print("[6/6] Uploading to YouTube...")
         credentials = _get_credentials()
