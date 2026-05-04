@@ -23,7 +23,7 @@ def _fetch_image(query: str, api_key: str) -> Image.Image:
         photos = r.json().get("photos", [])
         if photos:
             photo = random.choice(photos[:5])
-            img_bytes = req.get(photo["src"]["large2x"], timeout=20).content
+            img_bytes = req.get(photo["src"]["original"], timeout=30).content
             img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
             return ImageOps.fit(img, (W, H), Image.LANCZOS)
     except Exception:
