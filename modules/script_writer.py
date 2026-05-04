@@ -1,5 +1,5 @@
 import json
-from google import genai
+from groq import Groq
 
 PROMPT_TEMPLATE = """You are a scriptwriter for a faceless YouTube channel about history and mysteries.
 Write a compelling video script about: {topic}
@@ -42,11 +42,12 @@ def _strip_markdown(text: str) -> str:
 
 
 def generate_script(topic: str, api_key: str) -> dict:
-    client = genai.Client(api_key=api_key)
+    client = Groq(api_key=api_key)
     prompt = PROMPT_TEMPLATE.format(topic=topic)
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt,
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7,
     )
-    cleaned = _strip_markdown(response.text)
+    cleaned = _strip_markdown(response.choices[0].message.content)
     return json.loads(cleaned)
