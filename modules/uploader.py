@@ -38,9 +38,12 @@ def upload_video(video_path: str, thumbnail_path: str, script: dict, credentials
     response = insert_request.execute()
     video_id = response["id"]
 
-    youtube.thumbnails().set(
-        videoId=video_id,
-        media_body=MediaFileUpload(thumbnail_path),
-    ).execute()
+    try:
+        youtube.thumbnails().set(
+            videoId=video_id,
+            media_body=MediaFileUpload(thumbnail_path),
+        ).execute()
+    except Exception as e:
+        print(f"      Warning: thumbnail upload skipped ({e})")
 
     return video_id
