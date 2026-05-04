@@ -1,7 +1,7 @@
 """
 Main pipeline orchestrator.
 Run: python pipeline.py
-Env vars required: GEMINI_API_KEY, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN
+Env vars required: GROQ_API_KEY, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN
 """
 import os
 import shutil
@@ -34,7 +34,7 @@ def run() -> None:
         print(f"      Topic: {topic}")
 
         print("[2/6] Generating script...")
-        script = generate_script(topic, os.environ["GEMINI_API_KEY"])
+        script = generate_script(topic, os.environ["GROQ_API_KEY"])
         print(f"      Title: {script['title']}")
         print(f"      Sections: {len(script['sections'])}")
 
