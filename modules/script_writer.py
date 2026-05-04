@@ -8,7 +8,7 @@ This must read like ONE continuous story — not a list of facts. Every section 
 
 Return ONLY valid JSON — no markdown, no explanation — in exactly this format:
 {{
-  "title": "Captivating YouTube title under 60 characters",
+  "title": "Captivating YouTube title — dramatic full sentence, 70-100 characters",
   "description": "YouTube description 150-200 words covering what the video is about",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8"],
   "sections": [
@@ -30,9 +30,10 @@ STRICT RULES:
 - NO bullet-point style writing. NO "In this video we will explore..." — pure cinematic narration only
 
 Title rules — make it irresistible:
-- Power words: "Vanished", "Nobody Knows", "Covered Up", "They Never Found", "Still Unsolved", "Terrifying"
-- Curiosity gaps: "What Really Happened to...", "The Truth About...", "They Tried to Hide This"
-- Under 60 characters. Must reflect actual content — no lies.
+- Power words: "Vanished", "Nobody Knows", "Covered Up", "They Never Found", "Still Unsolved", "Terrifying", "Disturbing"
+- Curiosity gaps: "What Really Happened to...", "The Truth About...", "They Tried to Hide This", "The Mystery That Still Has No Answer"
+- Can be a dramatic full sentence: "Three Men Vanished Without a Trace — Nobody Has Ever Explained What Happened"
+- 70-100 characters. Longer titles perform better — use the full length. Must reflect actual content.
 
 - 8 relevant tags
 - description must NOT repeat the title verbatim"""
