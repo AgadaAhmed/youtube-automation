@@ -145,7 +145,7 @@ def render_outro_slide(channel_name: str, output_path: str, pexels_key: str = ""
 def _image_to_video_segment(slide_path: str, audio_path: str, output_path: str) -> None:
     subprocess.run(
         ["ffmpeg", "-y", "-loop", "1", "-i", slide_path, "-i", audio_path,
-         "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+         "-c:v", "libx264", "-crf", "18", "-preset", "fast", "-r", "24",
          "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
          "-pix_fmt", "yuv420p", "-shortest", output_path],
         check=True, capture_output=True,
@@ -153,12 +153,11 @@ def _image_to_video_segment(slide_path: str, audio_path: str, output_path: str) 
 
 
 def _render_outro_segment(slide_path: str, output_path: str, duration: float = OUTRO_DURATION) -> None:
-    # -t BEFORE -i limits input duration — most reliable way to cap a looped image segment
     subprocess.run(
         ["ffmpeg", "-y",
          "-t", str(duration), "-loop", "1", "-i", slide_path,
          "-f", "lavfi", "-t", str(duration), "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
-         "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+         "-c:v", "libx264", "-crf", "18", "-preset", "fast", "-r", "24",
          "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
          "-pix_fmt", "yuv420p", "-shortest",
          output_path],
@@ -172,8 +171,13 @@ def _concat_segments(segment_paths: list, output_path: str) -> None:
         for seg in segment_paths:
             concat_list.write(f"file '{os.path.abspath(seg)}'\n")
         concat_list.close()
+        # Re-encode during concat to fix timestamp issues (especially outro duration)
         subprocess.run(
-            ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_list.name, "-c", "copy", output_path],
+            ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_list.name,
+             "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+             "-c:a", "aac", "-b:a", "192k",
+             "-pix_fmt", "yuv420p",
+             output_path],
             check=True, capture_output=True,
         )
     finally:
