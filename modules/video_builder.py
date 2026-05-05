@@ -243,16 +243,29 @@ def _render_short_slide(text: str, output_path: str, pexels_key: str = "") -> No
 
 
 def build_short_video(short_script: dict, tmp_dir: str, output_path: str, pexels_key: str = "") -> None:
+    from modules.voice_generator import generate_section_audio, get_audio_duration
     sections = short_script["sections"]
-    segments = []
 
+    # Generate all audio first, then check cumulative duration to stay under 56s
+    audio_paths = []
     for i, section in enumerate(sections):
+        audio_path = os.path.join(tmp_dir, f"short_audio_{i:02d}.mp3")
+        generate_section_audio(section["text"], audio_path, pace=section.get("pace", "normal"))
+        audio_paths.append(audio_path)
+
+    total_duration = 0.0
+    included_sections = []
+    for i, section in enumerate(sections):
+        d = get_audio_duration(audio_paths[i])
+        if total_duration + d > 56.0:
+            break
+        total_duration += d
+        included_sections.append((i, section, audio_paths[i]))
+
+    segments = []
+    for i, section, audio_path in included_sections:
         slide_path = os.path.join(tmp_dir, f"short_slide_{i:02d}.png")
         _render_short_slide(section["text"], slide_path, pexels_key=pexels_key)
-
-        audio_path = os.path.join(tmp_dir, f"short_audio_{i:02d}.mp3")
-        from modules.voice_generator import generate_section_audio
-        generate_section_audio(section["text"], audio_path)
 
         seg_path = os.path.join(tmp_dir, f"short_seg_{i:02d}.mp4")
         subprocess.run(
