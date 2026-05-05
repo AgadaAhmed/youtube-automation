@@ -7,7 +7,7 @@ SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 
 
-def upload_video(video_path: str, thumbnail_path: str, script: dict, credentials: dict) -> str:
+def _build_youtube(credentials: dict):
     creds = Credentials(
         token=None,
         refresh_token=credentials["refresh_token"],
@@ -17,8 +17,11 @@ def upload_video(video_path: str, thumbnail_path: str, script: dict, credentials
         scopes=SCOPES,
     )
     creds.refresh(Request())
+    return build("youtube", "v3", credentials=creds)
 
-    youtube = build("youtube", "v3", credentials=creds)
+
+def upload_video(video_path: str, thumbnail_path: str, script: dict, credentials: dict) -> str:
+    youtube = _build_youtube(credentials)
 
     hashtags = " ".join(f"#{t.replace(' ', '')}" for t in script["tags"])
     description = f"{script['description']}\n\n{hashtags}"
@@ -50,3 +53,29 @@ def upload_video(video_path: str, thumbnail_path: str, script: dict, credentials
         print(f"      Warning: thumbnail upload skipped ({e})")
 
     return video_id
+
+
+def upload_short(short_path: str, script: dict, credentials: dict) -> str:
+    youtube = _build_youtube(credentials)
+
+    short_title = f"{script['title']} #Shorts"[:100]
+    hashtags = " ".join(f"#{t.replace(' ', '')}" for t in script["tags"])
+    description = f"{script['description']}\n\n{hashtags}\n\n#Shorts"
+
+    body = {
+        "snippet": {
+            "title": short_title,
+            "description": description,
+            "tags": script["tags"] + ["shorts", "youtubeshorts"],
+            "categoryId": "27",
+        },
+        "status": {
+            "privacyStatus": "public",
+            "selfDeclaredMadeForKids": False,
+        },
+    }
+
+    media = MediaFileUpload(short_path, chunksize=-1, resumable=True, mimetype="video/mp4")
+    insert_request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+    response = insert_request.execute()
+    return response["id"]

@@ -10,9 +10,9 @@ import tempfile
 from modules.topic_picker import pick_next_topic, mark_topic_used
 from modules.script_writer import generate_script
 from modules.voice_generator import generate_section_audio
-from modules.video_builder import build_video
+from modules.video_builder import build_video, create_short
 from modules.thumbnail_maker import generate_thumbnail
-from modules.uploader import upload_video
+from modules.uploader import upload_video, upload_short
 
 TOPICS_PATH = "data/topics.json"
 
@@ -60,6 +60,12 @@ def run() -> None:
         credentials = _get_credentials()
         video_id = upload_video(video_path, thumbnail_path, script, credentials)
         print(f"      Uploaded: https://youtube.com/watch?v={video_id}")
+
+        print("      Creating Short...")
+        short_path = os.path.join(tmp_dir, "short.mp4")
+        create_short(video_path, short_path)
+        short_id = upload_short(short_path, script, credentials)
+        print(f"      Short: https://youtube.com/shorts/{short_id}")
 
         print("Marking topic as used...")
         mark_topic_used(TOPICS_PATH, topic)
