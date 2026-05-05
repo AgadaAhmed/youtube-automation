@@ -184,6 +184,20 @@ def _concat_segments(segment_paths: list, output_path: str) -> None:
         os.unlink(concat_list.name)
 
 
+def create_short(main_video_path: str, output_path: str, duration: int = 58) -> None:
+    """Crop main video to 9:16 vertical and trim to 58s for YouTube Shorts."""
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", main_video_path,
+         "-vf", "crop=ih*9/16:ih:(iw-ih*9/16)/2:0,scale=1080:1920",
+         "-t", str(duration),
+         "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+         "-c:a", "aac", "-b:a", "192k",
+         "-pix_fmt", "yuv420p",
+         output_path],
+        check=True, capture_output=True,
+    )
+
+
 def build_video(script: dict, audio_files: list, tmp_dir: str, output_path: str,
                 pexels_key: str = "") -> None:
     sections = script["sections"]
