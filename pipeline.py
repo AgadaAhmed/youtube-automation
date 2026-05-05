@@ -69,8 +69,11 @@ def run() -> None:
         short_path = os.path.join(tmp_dir, "short.mp4")
         build_short_video(short_script, tmp_dir, short_path, pexels_key=pexels_key)
 
-        short_id = upload_short(short_path, script, credentials)
-        print(f"      Short: https://youtube.com/shorts/{short_id}")
+        try:
+            short_id = upload_short(short_path, script, credentials)
+            print(f"      Short: https://youtube.com/shorts/{short_id}")
+        except Exception as e:
+            print(f"      Warning: Short upload skipped ({e})")
 
         print("Marking topic as used...")
         mark_topic_used(TOPICS_PATH, topic)
