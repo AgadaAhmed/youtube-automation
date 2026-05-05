@@ -50,6 +50,44 @@ def _strip_markdown(text: str) -> str:
     return text.strip()
 
 
+SHORT_PROMPT_TEMPLATE = """You are writing a YouTube Shorts script for a history and mystery channel.
+Topic: {topic}
+
+This is a 45-55 second vertical video. Every single word must earn its place.
+The first sentence must be so shocking or intriguing that the viewer CANNOT scroll away.
+
+Return ONLY valid JSON — no markdown, no explanation:
+{{
+  "sections": [
+    {{
+      "text": "Narration text. Maximum 20 words. One punchy idea per section."
+    }}
+  ]
+}}
+
+RULES:
+- Exactly 5 sections
+- Section 1 (Hook): Drop the viewer into the most shocking moment immediately. "In 1900, three lighthouse keepers vanished. No bodies. No clues. Nothing." Start mid-action.
+- Section 2: The setup — what was normal before it all went wrong
+- Section 3: The moment everything changed — the discovery or turning point
+- Section 4: The most disturbing or baffling detail that has no explanation
+- Section 5 (CTA): End with an open question that haunts — "Nobody has ever explained what really happened. Follow for more."
+- Maximum 20 words per section
+- No filler. No "in this video". Pure cinematic narration only."""
+
+
+def generate_short_script(topic: str, api_key: str) -> dict:
+    client = Groq(api_key=api_key)
+    prompt = SHORT_PROMPT_TEMPLATE.format(topic=topic)
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.8,
+    )
+    cleaned = _strip_markdown(response.choices[0].message.content)
+    return json.loads(cleaned)
+
+
 def generate_script(topic: str, api_key: str) -> dict:
     client = Groq(api_key=api_key)
     prompt = PROMPT_TEMPLATE.format(topic=topic)

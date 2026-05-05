@@ -8,9 +8,9 @@ import shutil
 import tempfile
 
 from modules.topic_picker import pick_next_topic, mark_topic_used
-from modules.script_writer import generate_script
+from modules.script_writer import generate_script, generate_short_script
 from modules.voice_generator import generate_section_audio
-from modules.video_builder import build_video, create_short
+from modules.video_builder import build_video, build_short_video
 from modules.thumbnail_maker import generate_thumbnail
 from modules.uploader import upload_video, upload_short
 
@@ -61,9 +61,14 @@ def run() -> None:
         video_id = upload_video(video_path, thumbnail_path, script, credentials)
         print(f"      Uploaded: https://youtube.com/watch?v={video_id}")
 
-        print("      Creating Short...")
+        print("      Generating Short script...")
+        short_script = generate_short_script(topic, os.environ["GROQ_API_KEY"])
+        print(f"      Short sections: {len(short_script['sections'])}")
+
+        print("      Building Short video...")
         short_path = os.path.join(tmp_dir, "short.mp4")
-        create_short(video_path, short_path)
+        build_short_video(short_script, tmp_dir, short_path, pexels_key=pexels_key)
+
         short_id = upload_short(short_path, script, credentials)
         print(f"      Short: https://youtube.com/shorts/{short_id}")
 
