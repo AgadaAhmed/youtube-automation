@@ -2,7 +2,7 @@ import io
 import random
 import textwrap
 import requests as req
-from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 FONT_PATH = "assets/fonts/Montserrat-Bold.ttf"
 W, H = 1280, 720
@@ -31,54 +31,62 @@ def _fetch_image(query: str, api_key: str) -> Image.Image:
     return Image.new("RGB", (W, H), (8, 10, 24))
 
 
-def _add_glow(img: Image.Image, xy: tuple, text: str, font, color: tuple) -> Image.Image:
-    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(glow)
-    gd.text(xy, text, font=font, fill=(*color, 160), anchor="mm", align="center")
-    glow = glow.filter(ImageFilter.GaussianBlur(24))
-    base = img.convert("RGBA")
-    return Image.alpha_composite(base, glow).convert("RGB")
-
-
 def generate_thumbnail(title: str, output_path: str, topic: str = "", pexels_key: str = "") -> None:
     img = _fetch_image(topic or title, pexels_key)
 
-    # Dark gradient overlay: heavier at bottom for text area
-    grad = Image.new("L", (1, H))
-    for y in range(H):
-        grad.putpixel((0, y), int(80 + 140 * (y / H)))
-    grad = grad.resize((W, H), Image.LANCZOS)
-    img.paste(Image.new("RGB", (W, H), (0, 0, 0)), mask=grad)
+    # Light vignette — keep photo visible, darken edges
+    vignette = Image.new("L", (W, H))
+    vd = ImageDraw.Draw(vignette)
+    for i in range(120):
+        alpha = int(180 * (1 - i / 120))
+        vd.rectangle([(i, i), (W - i, H - i)], outline=alpha)
+    img.paste(Image.new("RGB", (W, H), (0, 0, 0)), mask=vignette)
 
-    # Fit title
-    font_size = 110
+    # Dark strip at bottom for text legibility (~40% of height)
+    strip_y = int(H * 0.52)
+    strip = Image.new("RGBA", (W, H - strip_y), (0, 0, 0, 200))
+    img.paste(strip.convert("RGB"),
+              (0, strip_y),
+              mask=strip.split()[3])
+
     draw = ImageDraw.Draw(img)
+
+    # --- Title text: auto-size to fit ---
+    font_size = 100
     while font_size > 40:
         font = ImageFont.truetype(FONT_PATH, font_size)
-        char_w = max(10, int(22 * (110 / font_size)))
+        char_w = max(12, int(24 * (100 / font_size)))
         wrapped = textwrap.fill(title, width=char_w)
         bbox = draw.textbbox((0, 0), wrapped, font=font)
-        if (bbox[3] - bbox[1]) < H - 180:
+        text_h = bbox[3] - bbox[1]
+        text_w = bbox[2] - bbox[0]
+        if text_h < (H - strip_y - 60) and text_w < W - 60:
             break
         font_size -= 6
 
-    text_y = H // 2 - 20
+    text_cx = W // 2
+    text_cy = strip_y + (H - strip_y) // 2 - 10
 
-    # Glow pass
-    img = _add_glow(img, (W // 2, text_y), wrapped, font, ACCENT_COLOR)
-    draw = ImageDraw.Draw(img)
+    # Red accent bar above text
+    bar_y = text_cy - text_h // 2 - 22
+    draw.rectangle([(text_cx - 60, bar_y), (text_cx + 60, bar_y + 6)], fill=ACCENT_COLOR)
 
-    # Accent bars
+    # Shadow
+    draw.text(
+        (text_cx + 4, text_cy + 4), wrapped,
+        font=font, fill=(0, 0, 0), anchor="mm", align="center",
+    )
+    # Main title
+    draw.text(
+        (text_cx, text_cy), wrapped,
+        font=font, fill=TEXT_COLOR, anchor="mm", align="center",
+    )
+
+    # Top accent bar
     draw.rectangle([(0, 0), (W, 7)], fill=ACCENT_COLOR)
-    draw.rectangle([(0, H - 7), (W, H)], fill=ACCENT_COLOR)
-    draw.rectangle([(46, 55), (53, H - 55)], fill=ACCENT_COLOR)
-
-    # Text shadow + main
-    draw.text((W // 2 + 5, text_y + 5), wrapped, font=font, fill=(0, 0, 0), anchor="mm", align="center")
-    draw.text((W // 2, text_y), wrapped, font=font, fill=TEXT_COLOR, anchor="mm", align="center")
-
-    # Channel label
-    label_font = ImageFont.truetype(FONT_PATH, 30)
-    draw.text((W // 2, H - 28), CHANNEL_LABEL, font=label_font, fill=ACCENT_COLOR, anchor="mm")
+    # Bottom accent bar + channel label
+    draw.rectangle([(0, H - 36), (W, H)], fill=ACCENT_COLOR)
+    label_font = ImageFont.truetype(FONT_PATH, 22)
+    draw.text((W // 2, H - 18), CHANNEL_LABEL, font=label_font, fill=TEXT_COLOR, anchor="mm")
 
     img.save(output_path, quality=95)

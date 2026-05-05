@@ -23,7 +23,8 @@ def _build_youtube(credentials: dict):
 def upload_video(video_path: str, thumbnail_path: str, script: dict, credentials: dict) -> str:
     youtube = _build_youtube(credentials)
 
-    hashtags = " ".join(f"#{t.replace(' ', '')}" for t in script["tags"])
+    top_tags = script["tags"][:5]
+    hashtags = " ".join(f"#{t.replace(' ', '')}" for t in top_tags)
     description = f"{script['description']}\n\n{hashtags}"
 
     body = {
@@ -59,8 +60,9 @@ def upload_short(short_path: str, script: dict, credentials: dict) -> str:
     youtube = _build_youtube(credentials)
 
     short_title = f"{script['title']} #Shorts"[:100]
-    hashtags = " ".join(f"#{t.replace(' ', '')}" for t in script["tags"])
-    description = f"{script['description']}\n\n{hashtags}\n\n#Shorts"
+    top_tags = script["tags"][:5]
+    hashtags = " ".join(f"#{t.replace(' ', '')}" for t in top_tags)
+    description = f"{script['description']}\n\n{hashtags}\n\n#Shorts\n\nFollow for more dark history."
 
     body = {
         "snippet": {

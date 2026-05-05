@@ -42,7 +42,7 @@ def run() -> None:
         audio_files = []
         for i, section in enumerate(script["sections"]):
             audio_path = os.path.join(tmp_dir, f"audio_{i:02d}.mp3")
-            generate_section_audio(section["text"], audio_path)
+            generate_section_audio(section["text"], audio_path, pace=section.get("pace", "normal"))
             audio_files.append(audio_path)
         print(f"      Generated {len(audio_files)} audio clips")
 
