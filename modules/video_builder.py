@@ -184,18 +184,103 @@ def _concat_segments(segment_paths: list, output_path: str) -> None:
         os.unlink(concat_list.name)
 
 
-def create_short(main_video_path: str, output_path: str, duration: int = 58) -> None:
-    """Crop main video to 9:16 vertical and trim to 58s for YouTube Shorts."""
-    subprocess.run(
-        ["ffmpeg", "-y", "-i", main_video_path,
-         "-vf", "crop=ih*9/16:ih:(iw-ih*9/16)/2:0,scale=1080:1920",
-         "-t", str(duration),
-         "-c:v", "libx264", "-crf", "18", "-preset", "fast",
-         "-c:a", "aac", "-b:a", "192k",
-         "-pix_fmt", "yuv420p",
-         output_path],
-        check=True, capture_output=True,
-    )
+SW, SH = 1080, 1920  # Short dimensions (9:16 vertical)
+
+
+def _fetch_vertical_image(query: str, api_key: str) -> Image.Image:
+    """Fetch a portrait-oriented image from Pexels for Shorts."""
+    try:
+        headers = {"Authorization": api_key}
+        r = req.get(
+            "https://api.pexels.com/v1/search",
+            headers=headers,
+            params={"query": query, "per_page": 10, "orientation": "portrait"},
+            timeout=10,
+        )
+        photos = r.json().get("photos", [])
+        if photos:
+            photo = random.choice(photos[:5])
+            img_bytes = req.get(photo["src"]["original"], timeout=30).content
+            img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+            return ImageOps.fit(img, (SW, SH), Image.LANCZOS)
+    except Exception:
+        pass
+    return Image.new("RGB", (SW, SH), (8, 10, 24))
+
+
+def _render_short_slide(text: str, output_path: str, pexels_key: str = "") -> None:
+    query = _extract_keywords(text, n=3)
+    img = _fetch_vertical_image(query, pexels_key)
+
+    # Strong dark overlay — text must be readable on mobile
+    img.paste(Image.new("RGB", (SW, SH), (0, 0, 0)), mask=Image.new("L", (SW, SH), 160))
+
+    draw = ImageDraw.Draw(img)
+
+    # Bold centered text — large font for mobile
+    font_size = 80
+    font = ImageFont.truetype(FONT_PATH, font_size)
+    wrapped = textwrap.fill(text, width=18)
+
+    # Position text in lower two-thirds (hook attention where thumbs hold phone)
+    text_y = int(SH * 0.62)
+
+    # Shadow
+    draw.text((SW // 2 + 4, text_y + 4), wrapped, font=font, fill=(0, 0, 0), anchor="mm", align="center")
+    # Main text
+    draw.text((SW // 2, text_y), wrapped, font=font, fill=TEXT_COLOR, anchor="mm", align="center")
+
+    # Red accent bar above text
+    bbox = draw.textbbox((SW // 2, text_y), wrapped, font=font, anchor="mm")
+    bar_y = bbox[1] - 20
+    draw.rectangle([(SW // 2 - 80, bar_y), (SW // 2 + 80, bar_y + 5)], fill=ACCENT_COLOR)
+
+    # Channel name at top
+    small_font = ImageFont.truetype(FONT_PATH, 32)
+    draw.text((SW // 2, 60), CHANNEL_NAME.upper(), font=small_font, fill=ACCENT_COLOR, anchor="mm")
+
+    img.save(output_path)
+
+
+def build_short_video(short_script: dict, tmp_dir: str, output_path: str, pexels_key: str = "") -> None:
+    sections = short_script["sections"]
+    segments = []
+
+    for i, section in enumerate(sections):
+        slide_path = os.path.join(tmp_dir, f"short_slide_{i:02d}.png")
+        _render_short_slide(section["text"], slide_path, pexels_key=pexels_key)
+
+        audio_path = os.path.join(tmp_dir, f"short_audio_{i:02d}.mp3")
+        from modules.voice_generator import generate_section_audio
+        generate_section_audio(section["text"], audio_path)
+
+        seg_path = os.path.join(tmp_dir, f"short_seg_{i:02d}.mp4")
+        subprocess.run(
+            ["ffmpeg", "-y", "-loop", "1", "-i", slide_path, "-i", audio_path,
+             "-c:v", "libx264", "-crf", "18", "-preset", "fast", "-r", "24",
+             "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
+             "-pix_fmt", "yuv420p", "-shortest", seg_path],
+            check=True, capture_output=True,
+        )
+        segments.append(seg_path)
+
+    # Concat and cap at 58s
+    concat_list = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
+    try:
+        for seg in segments:
+            concat_list.write(f"file '{os.path.abspath(seg)}'\n")
+        concat_list.close()
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_list.name,
+             "-t", "58",
+             "-c:v", "libx264", "-crf", "18", "-preset", "fast",
+             "-c:a", "aac", "-b:a", "192k",
+             "-pix_fmt", "yuv420p",
+             output_path],
+            check=True, capture_output=True,
+        )
+    finally:
+        os.unlink(concat_list.name)
 
 
 def build_video(script: dict, audio_files: list, tmp_dir: str, output_path: str,
