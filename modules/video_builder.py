@@ -153,13 +153,16 @@ def _image_to_video_segment(slide_path: str, audio_path: str, output_path: str) 
 
 
 def _render_outro_segment(slide_path: str, output_path: str, duration: float = OUTRO_DURATION) -> None:
+    frames = int(duration * 24)
     subprocess.run(
         ["ffmpeg", "-y",
-         "-t", str(duration), "-loop", "1", "-i", slide_path,
-         "-f", "lavfi", "-t", str(duration), "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+         "-loop", "1", "-i", slide_path,
+         "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
          "-c:v", "libx264", "-crf", "18", "-preset", "fast", "-r", "24",
          "-tune", "stillimage", "-c:a", "aac", "-b:a", "192k",
-         "-pix_fmt", "yuv420p", "-shortest",
+         "-pix_fmt", "yuv420p",
+         "-frames:v", str(frames),
+         "-t", str(duration),
          output_path],
         check=True, capture_output=True,
     )
